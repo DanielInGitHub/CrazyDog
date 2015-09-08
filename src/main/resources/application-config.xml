@@ -12,7 +12,7 @@
     <context:property-placeholder location="classpath:config.properties"/>
 
     <!--Spring扫描以下包进行IOC操作-->
-    <context:component-scan base-package="org.crazydog.daoI.impl,org.crazydog.serviceI.impl"/>
+    <context:component-scan base-package="org.crazydog.daoI.impl,org.crazydog.serviceI.impl,org.crazydog.logI.Impl"/>
 
     <!--开启注解-->
     <context:annotation-config/>
@@ -94,4 +94,21 @@
         </tx:attributes>
     </tx:advice>
 
+    <!--使用aop来记录日志-->
+    <aop:config proxy-target-class="true">
+        <!--pointcut表示将切面逻辑应用到哪些类上，采用的是aspectJ的表达式语言-->
+        <aop:pointcut id="myPointcut"
+                      expression="execution(* org.crazydog.serviceI.impl.*.*(..))"/>
+        <!-- 切面： 将哪个对象中的哪个方法，织入到哪个切入点 -->
+        <aop:aspect ref="consoleLogImpl">
+            <!-- 前置通知-->
+            <!--<aop:before method="beforeAdvice" pointcut-ref="myPointcut"/>-->
+            <!--<aop:after method="afterAdvice" pointcut-ref="myPointcut"/>-->
+            <aop:around method="aroundAdvice" pointcut-ref="myPointcut"/>
+            <!--<aop:after-returning method="afterReturningAdvice" returning="returnObj" pointcut-ref="myPointcut"/>-->
+        </aop:aspect>
+    </aop:config>
+
+    <!-- 启用AspectJ对Annotation的支持 -->
+    <!--<aop:aspectj-autoproxy proxy-target-class="true"/>-->
 </beans>

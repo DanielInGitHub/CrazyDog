@@ -1,12 +1,19 @@
-package org.crazydog.logI;
+package org.crazydog.logI.Impl;
 
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.ProceedingJoinPoint;
+import org.crazydog.logI.LogAOPI;
+import org.springframework.stereotype.Component;
+
+import java.util.logging.Logger;
 
 /**
  * Created by never on 2015/9/8.
  */
-public interface LogAOPI {
+@Component
+public class JDKLogImpl implements LogAOPI {
+
+    private static final Logger LOGGER = Logger.getLogger("org.crazydog");
 
     /**
      * Before
@@ -19,7 +26,10 @@ public interface LogAOPI {
      *
      * @param point
      */
-    void beforeAdvice(JoinPoint point);
+    public void beforeAdvice(JoinPoint point) {
+        LOGGER.entering(point.getTarget().getClass().toString(), "start to enter the method [" + point.getSignature() + "]");
+        LOGGER.info("start to enter the method [" + point.getSignature() + "]");
+    }
 
     /**
      * After
@@ -32,7 +42,15 @@ public interface LogAOPI {
      *
      * @param point
      */
-    void afterAdvice(JoinPoint point);
+    public void afterAdvice(JoinPoint point) {
+        Object[] args = point.getArgs();
+        LOGGER.info("目标参数列表：");
+        if (args != null) {
+            for (Object obj : args) {
+                LOGGER.info(obj + ",");
+            }
+        }
+    }
 
     /**
      * Around
@@ -45,8 +63,18 @@ public interface LogAOPI {
      * @return
      * @throws Throwable
      */
-    Object aroundAdvice(ProceedingJoinPoint pjp) throws Throwable;
+    public Object aroundAdvice(ProceedingJoinPoint pjp) throws Throwable {
+        //调用目标方法之前的逻辑
+        beforeAdvice(pjp);
 
+        //调用核心逻辑
+        Object returnObj = pjp.proceed();
+
+        //调用目标方法之后的逻辑
+        afterReturningAdvice(pjp, returnObj);
+
+        return returnObj;
+    }
 
     /**
      * AfterReturning
@@ -60,7 +88,17 @@ public interface LogAOPI {
      * @param point
      * @param returnObj
      */
-    void afterReturningAdvice(JoinPoint point, Object returnObj);
+    public void afterReturningAdvice(JoinPoint point, Object returnObj) {
+        Object[] args = point.getArgs();
+        LOGGER.info("目标参数列表：");
+        if (args != null) {
+            for (Object obj : args) {
+                LOGGER.info(obj + ",");
+            }
+            LOGGER.info("执行结果是：" + returnObj);
+            LOGGER.exiting(point.getTarget().getClass().toString(), "执行结果是：" + returnObj);
+        }
+    }
 
     /**
      * 核心业务逻辑调用异常退出后，执行此Advice，处理错误信息
@@ -73,5 +111,7 @@ public interface LogAOPI {
      * @param joinPoint
      * @param ex
      */
-    void afterThrowingAdvice(JoinPoint joinPoint, Exception ex);
+    public void afterThrowingAdvice(JoinPoint joinPoint, Exception ex) {
+        LOGGER.severe(" 错误信息：" + ex.getMessage());
+    }
 }
