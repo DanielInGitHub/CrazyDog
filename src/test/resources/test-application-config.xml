@@ -2,10 +2,17 @@
 
 <beans xmlns="http://www.springframework.org/schema/beans"
        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-       xmlns:context="http://www.springframework.org/schema/context" xmlns:tx="http://www.springframework.org/schema/tx"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:tx="http://www.springframework.org/schema/tx"
        xmlns:aop="http://www.springframework.org/schema/aop"
-       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
-		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx.xsd http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop.xsd">
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+        http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/context
+		http://www.springframework.org/schema/context/spring-context.xsd
+		http://www.springframework.org/schema/tx
+		http://www.springframework.org/schema/tx/spring-tx.xsd
+		http://www.springframework.org/schema/aop
+		http://www.springframework.org/schema/aop/spring-aop.xsd">
 
     <!-- 引入属性文件 集中管理配置属性-->
     <context:property-placeholder location="classpath:config.properties"/>
@@ -69,6 +76,21 @@
                      advice-ref="transactionAdvice"/>
     </aop:config>
 
+    <!--将日志类注入到bean中。-->
+    <bean id="DAOLogger" class="org.crazydog.log.DAOLoggerAOP"></bean>
+    <aop:config>
+        <!--pointcut表示将切面逻辑应用到哪些类上，采用的是aspectJ的表达式语言-->
+        <aop:pointcut id="log" expression="execution(* org.crazydog.daoI.impl.*.*(..))"/>
+        <!--他指定的是在连接点上的那个时机调用什么方法来完成这个逻辑的织入-->
+        <aop:aspect ref="DAOLogger">
+            <aop:before pointcut-ref="log" method="before"/>
+        </aop:aspect>
+        <!--每一个aspect的配置都需要重新指定，所以这里指定了after的调用逻辑-->
+        <aop:aspect ref="DAOLogger">
+            <aop:after pointcut-ref="log" method="after"/>
+        </aop:aspect>
+    </aop:config>
+
     <!-- 拦截器方式配置事务 通知定位拦截的方法，并配置了事务的传播属性，默认是REQUIRED 所以没有指出-->
     <tx:advice id="transactionAdvice" transaction-manager="transactionManager">
         <tx:attributes>
@@ -92,5 +114,6 @@
             <tx:method name="*" propagation="SUPPORTS"/>
         </tx:attributes>
     </tx:advice>
+
 
 </beans>
